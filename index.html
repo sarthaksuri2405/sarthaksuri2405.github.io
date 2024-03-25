@@ -74,7 +74,7 @@
 <body>
     <div class="container">
         <h1>Face Recognition</h1>
-        <form id="upload-form" method="POST" enctype="multipart/form-data">
+        <form id="upload-form" enctype="multipart/form-data">
             <label for="file">Choose image(s) to upload:</label><br>
             <input type="file" name="file" id="file" accept="image/*" multiple required><br>
             <button id="upload-button" type="submit">Upload</button>
@@ -90,20 +90,47 @@
     </div>
 
     <script>
-        document.getElementById('upload-form').addEventListener('submit', function() {
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            // Prevent the default form submission
+            event.preventDefault();
+
             // Show processing message
             document.getElementById('processing-message').style.display = 'block';
+
+            // Create FormData object to send the files
+            var formData = new FormData();
+            var files = document.getElementById('file').files;
+            for (var i = 0; i < files.length; i++) {
+                formData.append('file', files[i]);
+            }
+
+            // Send AJAX request to Flask backend running on local machine
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://127.0.0.1:5000/', true); // Replace with the URL of your local Flask backend
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Hide processing message
+                    document.getElementById('processing-message').style.display = 'none';
+
+                    // Show download button
+                    document.getElementById('download-button').style.display = 'block';
+
+                    // Set download link
+                    var downloadLink = document.getElementById('download-link');
+                    downloadLink.href = URL.createObjectURL(xhr.response);
+                    downloadLink.setAttribute('download', 'matched_images.zip');
+                } else {
+                    // Handle error
+                    alert('An error occurred while processing your request.');
+                }
+            };
+            xhr.onerror = function() {
+                // Handle error
+                alert('An error occurred while processing your request.');
+            };
+            xhr.responseType = 'blob'; // Set response type to blob
+            xhr.send(formData);
         });
-
-        // Function to show download button
-        function showDownloadButton() {
-            document.getElementById('download-button').style.display = 'block';
-        }
-
-        // Function to set download link
-        function setDownloadLink(url) {
-            document.getElementById('download-link').href = url;
-        }
     </script>
 </body>
 </html>
